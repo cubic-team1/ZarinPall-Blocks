@@ -1,0 +1,47 @@
+[
+  {
+    "code": "",
+    "color": "#FFD70000",
+    "name": "Zarinpal Setup",
+    "typeName": "",
+    "palette": "167",
+    "type": "h",
+    "spec": "Zarinpal Payment Setup"
+  },
+  {
+    "code": "// Store Zarinpal Merchant ID in SharedPreferences\nSharedPreferences prefs = getApplicationContext().getSharedPreferences(\"ZarinpalPrefs\", Context.MODE_PRIVATE);\nSharedPreferences.Editor editor = prefs.edit();\neditor.putString(\"zarinpalMerchantId\", %1$s);\neditor.apply();",
+    "color": "#FFD70000",
+    "name": "set_zarinpal_merchant_id",
+    "typeName": "",
+    "palette": "167",
+    "type": " ",
+    "spec": "Set Zarinpal Merchant ID %s"
+  },
+  {
+    "code": "",
+    "color": "#FFD70000",
+    "name": "Zarinpal Payment",
+    "typeName": "",
+    "palette": "167",
+    "type": "h",
+    "spec": "Zarinpal Payment Actions"
+  },
+  {
+    "code": "// Start Zarinpal Payment\nnew ZarinpalPaymentTask().execute(%1$s, %2$s, %3$s, %4$s, %5$s);",
+    "color": "#FFD70000",
+    "name": "start_zarinpal_payment",
+    "typeName": "",
+    "palette": "167",
+    "type": " ",
+    "spec": "Start Zarinpal Payment Amount (Toman) %s ○ Description %s ○ Callback URL %s ○ Mobile Number %s ○ Email %s"
+  },
+  {
+    "code": "import android.content.Context;\nimport android.content.SharedPreferences;\nimport android.os.AsyncTask;\nimport android.content.Intent;\nimport android.net.Uri;\nimport java.io.IOException;\nimport okhttp3.MediaType;\nimport okhttp3.OkHttpClient;\nimport okhttp3.Request;\nimport okhttp3.RequestBody;\nimport okhttp3.Response;\nimport org.json.JSONObject;\nimport org.json.JSONException;\n\npublic class ZarinpalUtils {\n\n    public static class ZarinpalPaymentTask extends AsyncTask<String, Void, String> {\n\n        private Context context;\n        private String merchantId;\n\n        public ZarinpalPaymentTask(Context context, String merchantId) {\n            this.context = context;\n            this.merchantId = merchantId;\n        }\n\n        @Override\n        protected String doInBackground(String... params) {\n            String amount = params[0];\n            String description = params[1];\n            String callbackUrl = params[2];\n            String mobile = params[3];\n            String email = params[4];\n\n            try {\n                OkHttpClient client = new OkHttpClient();\n                MediaType mediaType = MediaType.parse(\"application/json\");\n                JSONObject jsonBody = new JSONObject();\n                jsonBody.put(\"merchant_id\", merchantId);\n                jsonBody.put(\"amount\", amount);\n                jsonBody.put(\"description\", description);\n                jsonBody.put(\"callback_url\", callbackUrl);\n                jsonBody.put(\"mobile\", mobile);\n                jsonBody.put(\"email\", email);\n\n                RequestBody body = RequestBody.create(mediaType, jsonBody.toString());\n\n                Request request = new Request.Builder()\n                        .url(\"https://api.zarinpal.com/pg/v4/payment/request.json\") // Zarinpal API URL\n                        .post(body)\n                        .addHeader(\"Content-Type\", \"application/json\")\n                        .build();\n\n                Response response = client.newCall(request).execute();\n                String responseBody = response.body().string();\n\n                JSONObject jsonResponse = new JSONObject(responseBody);\n                int code = jsonResponse.getJSONObject(\"data\").getInt(\"code\");\n                String authority = jsonResponse.getJSONObject(\"data\").getString(\"authority\");\n\n                if (code == 100) {\n                    // Payment request was successful\n                    return authority;\n                } else {\n                    // Payment request failed\n                    return \"Error: \" + jsonResponse.getJSONObject(\"errors\").getString(\"message\");\n                }\n\n            } catch (IOException e) {\n                return \"Error: \" + e.getMessage();\n            } catch (JSONException e) {\n                return \"Error: \" + e.getMessage();\n            }\n        }\n\n        @Override\n        protected void onPostExecute(String authority) {\n            if (authority.startsWith(\"Error:\")) {\n                // Handle the error (e.g., display an error message)\n\n            } else {\n                // Redirect user to Zarinpal payment gateway\n                String paymentUrl = \"https://www.zarinpal.com/pg/StartPay/\" + authority;\n                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(paymentUrl));\n                context.startActivity(browserIntent);\n            }\n        }\n    }\n}",
+    "color": "#FFD70000",
+    "name": "zarinpal_payment_task_code",
+    "typeName": "",
+    "palette": "167",
+    "type": "code",
+    "spec": "Zarinpal Payment Task Code"
+  }
+]
